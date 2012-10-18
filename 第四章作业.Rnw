@@ -1,0 +1,234 @@
+\documentclass[UTF8,10pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[a4paper,%%textwidth=129mm,textheight=185mm, %%193-8
+text={160mm,260mm},centering]{geometry}
+\usepackage[BoldFont,SlantFont,CJKsetspaces,CJKchecksingle,CJKnumber,CJKaddspaces]{xeCJK}
+\usepackage{graphicx, color}
+\usepackage{setspace}
+\setCJKmainfont[BoldFont=SimHei]{SimSun}% 设置缺省中文字体
+\setCJKmonofont{SimSun}
+\usepackage{amsmath}%数学符号与公式
+
+\usepackage{amsfonts}%数学符号与字体
+
+\pagestyle{empty}
+\begin{document}
+\SweaveOpts{concordance=TRUE}
+<<setup, include=FALSE>>=
+opts_chunk$set(message=FALSE, tidy=FALSE, fig.align="center", fig.width=5, fig.height=3,digits=4)
+@
+\title{多元第四章作业}
+\author{吴敏}
+\maketitle
+\section*{第一题}
+<<>>=
+#数据读入
+x1 <- c(10,5,7,19,11,8)
+y <- c(15,9,3,25,7,13)
+#建立回归方程
+model1 <- lm(y ~ x1)
+model1
+#拟合的估计值
+fitted(model1)
+#残差
+residuals(model1)
+#残差平方和
+sum(residuals(model1)^2)
+@
+\section*{第二题}
+<<>>=
+#读入x2
+x2 <- c(2,3,3,6,7,9)
+#先建立标准化函数
+Standard <- function(x) {
+unlist(lapply(x, function(p) (p-mean(x))/sd(x)))
+}
+data <- cbind(y, x1, x2)
+#标准化数据
+stdata <- apply(data, 2, function(p) Standard(p))
+#建立标准化的回归方程
+model2 <- lm(y ~ x1 + x2 + 0, data=as.data.frame(stdata))
+#导出原回归方程
+@
+标准化的方程为\[(y_{i}-Ey)/Dy=(\beta_{1}x_{i1}-Ex_{i1})/Dx_{i1}+(\beta_{2}x_{i2}-Ex_{i1})/Dx_{i2}+\varepsilon_{i},i=1,2,...,6\]
+根据该方程求出原变量的方程系数
+
+<<coeff>>=
+a0=mean(y)-coef(model2)[1]*sd(y)^2/sd(x1)^2-coef(model2)[2]*sd(y)^2/sd(x2)^2
+a1=coef(model2)[1]*sd(y)^2/sd(x1)^2
+a2=coef(model2)[2]*sd(y)^2/sd(x2)^2
+@
+原方程系数用$\alpha$表示则$\alpha_{0}=\Sexpr{unname(a0)}$，
+$\alpha_{1}=\Sexpr{unname(a1)}$，
+$\alpha_{2}=\Sexpr{unname(a2)}$。
+原回归方程则为
+\[
+y_{i}=\Sexpr{unname(a0)}+\Sexpr{unname(a1)}x_{i1}+\Sexpr{unname(a2)}x_{i2}+\varepsilon_{i},i=1,2,...,6\]
+\section*{第三题}
+
+<<>>=
+#输入数据
+x <- c(825,215,1070,550,480,920,1350,325,670,1215)
+y <- c(3.5,1,4,2,1,3,4.5,1.5,3,5)
+data3 <- cbind(y,x)
+data3 <- as.data.frame(data3)
+#加载包，并作散点图
+library(ggplot2)
+p <- ggplot(data=data3, aes(x=x, y=y))
+p + geom_point()
+#计算x与y的相关系数
+cor(x,y)
+#估计线性回归方程
+model3 <- lm(y ~ x)
+model3
+summary(model3)$sigma^2
+@
+所以随机误差项的方差估计值
+\Sexpr{summary(model3)$sigma}
+<<>>=
+#求x与y的决定系数
+sqrt(summary(model3)$r.squared)
+#对回归方程作方差分析
+anova(model3)
+@
+残差图如下
+<<echo=FALSE>>=
+data <- cbind(x, residuals(model3))
+ggplot(data=as.data.frame(data), aes(x=x, y=residuals(model3))) + geom_point()+
+  geom_hline(h=0)
+@
+根据散点图我们可以看出，残差基本上在0周围上下波动
+计算$x_0=1000$时的加班时间
+<<>>=
+ predict(object=model3, data.frame(x=c(1000)))
+@
+\section*{第四题}
+<<>>=
+#读入数据
+data4 <- read.csv("~/homework/data/data4.4.csv", header=T)
+names(data4) <- c("budget", "agent", "sale")
+model4 <- lm(sale ~ budget + agent, data=data4)
+summary(model4)
+@
+根据估计的系数值看，广告预算每增加1千元，年销售额增加15万；每增加一个代理, 年销售额增加122万；常数项表示当预算和代理都为零时，年销售额为－2275万。但从t检验的值来看，系数并不显著。画散点分析下：
+<<>>=
+plot(data4$budget,data4$sale)
+plot(data4$agent,data4$sale)
+@
+发现广告预算与销售额没有明显的线性
+
+
+<<>>=
+model <- lm(sale ~ budget, data=data4)
+summary(model)
+@
+在5％显著水平下，销售额与广告预算线性关系不显著
+<<>>=
+model <- lm(sale ~ agent, data=data4)
+summary(model)
+@
+在5％显著水平下，销售额与代理数线性关系不显著
+
+<<>>=
+#计算相关系数
+cor(data4)
+#计算复相关系数
+sqrt(summary(lm(sale ~ budget + agent, data=data4))$r.squared)
+@
+\section*{第五题}
+<<>>=
+#读入数据
+data5 <- read.csv("~/homework/data/data4.5.csv", header=T)
+names(data5) <- c("GPA", "age", "wage")
+model5 <- lm(wage ~ GPA + age, data=data5)
+summary(model5)
+@
+从系数来看GPA每增加1分，起始工资增加8509元；年龄每增加一岁，起始工资增加182元
+从系数的t检验来看，GPA可以解释起始工资的变化。而年龄则不显著
+预测GPA为3，年龄为24岁的毕业生起始工资
+<<>>=
+predict(model5, data.frame(GPA=c(3), age=c(24)))
+@
+\section*{第六题}
+<<>>=
+#读入数据
+data6 <- read.csv("~/homework/data/data4.6.csv", header=T)
+#相关系数矩阵与矩阵散点图
+cor(data6)
+pairs(data6)
+#建立多元线性回归方程
+model6 <- lm(y ~ x1 + x2 + x3, data=data6)
+model6
+#拟合优度检验
+summary(model6)$r.squared
+#方程拟合程度较高
+summary(model6)
+#可以看出x1和x3没有通过检验重建模型
+model6 <- lm(y ~ x2, data=data6)
+summary(model6)
+#全局择优
+library("leaps")
+var.select <- regsubsets(y ~ x1 + x2 + x3, data=data6)
+result <- summary(var.select)
+data.frame(result$outmat, R2=result$rsq)
+#最后选择x2
+@
+\section*{第七题}
+<<>>=
+#读入数据
+data7 <- read.csv("~/homework/data/data4.7.csv", header=T)
+#相关系数矩阵与矩阵散点图
+cor(data7)
+pairs(data7)
+#建立多元线性回归方程
+model7 <- lm(Y ~ X1 + X2 + X3 + X4 + X5 + X6 + X7, data=data7)
+summary(model7)
+#X1和X2没有通过检验，剔除
+model7 <- lm(Y ~ X3 + X4 + X5 + X6 + X7, data=data7)
+summary(model7)
+#用逐步回归建立回归模型
+model7 <- lm(Y ~ X1 + X2 + X3 + X4 + X5 + X6 + X7, data=data7)
+step(model7, direction="both")
+@
+最后建立的模型剔除了X3
+<<>>=
+#用变量选择法建立模型
+var.select <- regsubsets(Y ~ X1 + X2 + X3 + X4 + X5 + X6 + X7, data=data7)
+result <- summary(var.select)
+data.frame(result$outmat, R2=result$rsq, BIC=result$bic)
+@
+最后根据BIC选择的模型也是剔除X3
+\section*{第八题}
+离差矩阵函数
+<<>>=
+#先建立中心化每个变量值的函数
+Center <- function(x) {
+unlist(lapply(x, function(p) (p-mean(x))))
+}
+#求离差矩阵的函数
+DispMatrix <- function(M) {
+  m <- M
+  m <-unname(m)
+  for(i in 1:dim(m)[2]) {
+    m[, i] <- Center(m[, i])
+  }
+   return(t(m)%*%m)
+}
+@
+决定系数函数,本函数以一元为例
+<<>>=
+r.fun <- function(m) {
+  x <- model.matrix(~ m[, 1],m)
+  y <- m[, 2]
+  coeff <- solve(t(x)%*%x)%*%t(x)%*%y
+  y.hat <- x%*%coeff
+  cor(y, y.hat)
+}
+@
+
+
+
+
+
+
+\enddocument
