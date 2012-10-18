@@ -1,0 +1,39 @@
+github上的练习
+========================================================
+
+```{r}
+#数据读入
+x1 <- c(10,5,7,19,11,8)
+y <- c(15,9,3,25,7,13)
+#建立回归方程
+model1 <- lm(y ~ x1)
+model1
+#拟合的估计值
+fitted(model1)
+#残差
+residuals(model1)
+#残差平方和
+sum(residuals(model1)^2)
+```
+
+```{r}
+#读入x2
+x2 <- c(2,3,3,6,7,9)
+#先建立标准化函数
+Standard <- function(x) {
+unlist(lapply(x, function(p) (p-mean(x))/sd(x)))
+}
+data <- cbind(y, x1, x2)
+#标准化数据
+stdata <- apply(data, 2, function(p) Standard(p))
+#建立标准化的回归方程
+model2 <- lm(y ~ x1 + x2 + 0, data=as.data.frame(stdata))
+#导出原回归方程
+```
+
+```{r, warning=FALSE}
+library(ggplot2)
+data <- as.data.frame(data)
+ggplot(data=data, aes(x=x1, y=x2)) + geom_point() + geom_smooth()
+```
+
