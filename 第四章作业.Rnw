@@ -1,4 +1,4 @@
-\documentclass[UTF8,10pt]{article}
+\documentclass[12pt,oneside,openany]{book}
 \usepackage[utf8]{inputenc}
 \usepackage[a4paper,%%textwidth=129mm,textheight=185mm, %%193-8
 text={160mm,260mm},centering]{geometry}
@@ -8,19 +8,141 @@ text={160mm,260mm},centering]{geometry}
 \setCJKmainfont[BoldFont=SimHei]{SimSun}% 设置缺省中文字体
 \setCJKmonofont{SimSun}
 \usepackage{amsmath}%数学符号与公式
-
+\usepackage[pdftex,dvipdfm]{hyperref}
 \usepackage{amsfonts}%数学符号与字体
-
-\pagestyle{empty}
+\renewcommand{\contentsname}{目录}
+\pagestyle{plain}
 \begin{document}
 \SweaveOpts{concordance=TRUE}
 <<setup, include=FALSE>>=
-opts_chunk$set(message=FALSE, tidy=FALSE, fig.align="center", fig.width=5, fig.height=3,digits=4)
+opts_chunk$set(message=FALSE, tidy=FALSE, fig.align="center", fig.width=5, fig.height=3,  digits=3, highlight=TRUE, warning=FALSE)
+options(scipen=4)
+par(mar=c(2,2,2,1))
 @
-\title{多元第四章作业}
+\title{多元作业}
 \author{吴敏}
 \maketitle
+\tableofcontents
+\chapter*{第二章}
+\addcontentsline{toc}{chapter}{第二章}
 \section*{第一题}
+\addcontentsline{toc}{section}{第一题}
+<<2.1>>=
+#输入数据
+R <- matrix(c(1,0.8,0.26,0.67,0.34,0.8,1,0.33,0.59,0.34,0.26,0.33,
+              1,0.37,0.21,0.67,0.59,0.37,1,0.35,0.34,0.34,0.21,0.35,1), 5, 5)
+#求逆矩阵
+solve(R)
+#求特征值和特征向量
+R.eigen <- eigen(R)
+R.eigen$values
+R.eigen$vectors
+#计算函数
+REigen <- function(R) {
+  R.eigen <- eigen(R)
+  a <- list(
+    solve(R),
+    R.eigen$values,
+    R.eigen$vectors)
+ names(a) <- c("逆矩阵","特征值","特征向量")
+  a
+}
+REigen(R)
+@
+\section*{第二题}
+\addcontentsline{toc}{section}{第二题}
+<<2.2>>=
+#数据读入
+data2.2 <- read.csv("~/homework/data/data2.2.csv", header=T)
+names(data2.2) <- c("income")
+
+#频数表函数
+
+DataTable <- function(data, n) {
+index <- (max(data)-min(data))/n#求组数
+index <- ceiling(index) 
+factor.data <- factor(cut(data, breaks=min(data)-1+n*(0:index)))#对数据分组
+table.data <- table(factor.data) #频数表
+table.data
+} 
+#累积频率函数
+ SumFreq <-function(f) {
+  m <- c(1:length(f))
+  m[1] <- f[1]  
+  for(i in 2:length(f)) {
+   m[i] <- f[i] + m[i-1]
+  }
+  return(m/sum(f))
+}
+#总体程序, 输入的data为向量，n为组距
+FreqSummary <- function(data, n) {
+ table.data <- DataTable(data, n)  #得到频数表
+ data.freq <- table.data/length(data) #计算频率
+ barplot(table.data, col=1:7)
+ freq.matrix <- rbind(table.data, data.freq, SumFreq(table.data))
+ row.names(freq.matrix) <- c("频数", "频率", "累计频率")
+ freq.matrix       
+}
+#输出结果
+FreqSummary(data2.2$income, 300)
+#基本统计分析
+summary(data2.2)
+#正态概率图
+hist(data2.2$income, breaks=20, prob=T, col=4)
+lines(density(rnorm(200000, mean(data2.2$income), sd(data2.2$income))), lwd=2)
+@
+从图可知，低收入人群更多。收入的概率密度曲线右偏
+
+\section*{第三题}
+\addcontentsline{toc}{section}{第三题}
+<<2.3>>=
+#数据读入
+data2.3 <- read.csv("~/homework/data/data2.3.csv", header=T)
+
+#基本统计分析
+summary(data2.3)
+table(data2.3[, 2], data2.3[, 4])
+@
+\section*{第四题}
+\addcontentsline{toc}{section}{第四题}
+第二题的FreqSummary函数具有此功能。参数data接受向量输入数据， 参数n为希望得到的组距能得到频数、频率、累计频率组成的表，以及直方图。
+\chapter*{第三章}
+\addcontentsline{toc}{chapter}{第三章}
+\section*{第一题}
+\addcontentsline{toc}{section}{第一题}
+星象图与雷达图的区别。星象图用扇形大小表示数据的大小，而雷达图用点到原点的距离表示；雷达图在一个图形中表示不同对象，用线的颜色或类型区别。而星象图在不同图形中表示。函数太难就不编了，拿别人编好的来用就行。下题将使用星象图与雷达图作图。
+\section*{第二题}
+\addcontentsline{toc}{section}{第二题}
+<<3.2, fig.width=6, fig.height=5>>=
+pdf.options(family="GB1")
+#数据读入
+data3.2 <- read.csv("~/homework/data/data3.2.csv", header=T)
+row.names(data3.2) <- data3.2[,1]
+data3.2 <- data3.2[,2:5]
+names(data3.2) <- c("工业总产值","工业增加值","产品销售收入","产品出口销售收入")
+#各变量均值的条形图和饼图
+barplot(apply(data3.2, 2, mean), ylim=c(0,500), col=2:4, main="各指标均值")
+pie(apply(data3.2, 2, mean), col=rainbow(4))
+#箱形图
+boxplot(data3.2, main="各指标数据的分布情况")
+#星象图
+stars(data3.2, draw.segments=T)
+#雷达图
+library(fmsb)
+radarchart(data3.2)
+par(mar=c(1,2,1,1),mfrow=c(2,2))
+barplot(data3.2[, 1], main="工业产值在各地区的情况")
+barplot(data3.2[, 2], main="工业增加值在各地区的情况")
+barplot(data3.2[, 3], main="产品销售收入在地区的情况")
+barplot(data3.2[, 4], main="产品出口销售收入在各地区的情况")
+par(mar=c(2,2,2,1), mfrow=c(1,1))
+@
+
+
+\chapter*{第四章}
+\addcontentsline{toc}{chapter}{第四章}
+\section*{第一题}
+\addcontentsline{toc}{section}{第一题}
 <<>>=
 #数据读入
 x1 <- c(10,5,7,19,11,8)
@@ -36,6 +158,7 @@ residuals(model1)
 sum(residuals(model1)^2)
 @
 \section*{第二题}
+\addcontentsline{toc}{section}{第二题}
 <<>>=
 #读入x2
 x2 <- c(2,3,3,6,7,9)
@@ -64,8 +187,9 @@ $\alpha_{2}=\Sexpr{unname(a2)}$。
 原回归方程则为
 \[
 y_{i}=\Sexpr{unname(a0)}+\Sexpr{unname(a1)}x_{i1}+\Sexpr{unname(a2)}x_{i2}+\varepsilon_{i},i=1,2,...,6\]
-\section*{第三题}
 
+\section*{第三题}
+\addcontentsline{toc}{section}{第三题}
 <<>>=
 #输入数据
 x <- c(825,215,1070,550,480,920,1350,325,670,1215)
@@ -102,7 +226,9 @@ ggplot(data=as.data.frame(data), aes(x=x, y=residuals(model3))) + geom_point()+
 <<>>=
  predict(object=model3, data.frame(x=c(1000)))
 @
+
 \section*{第四题}
+\addcontentsline{toc}{section}{第四题}
 <<>>=
 #读入数据
 data4 <- read.csv("~/homework/data/data4.4.csv", header=T)
@@ -135,8 +261,10 @@ cor(data4)
 #计算复相关系数
 sqrt(summary(lm(sale ~ budget + agent, data=data4))$r.squared)
 @
+
 \section*{第五题}
-<<>>=
+\addcontentsline{toc}{section}{第五题}
+<<4.5>>=
 #读入数据
 data5 <- read.csv("~/homework/data/data4.5.csv", header=T)
 names(data5) <- c("GPA", "age", "wage")
@@ -150,6 +278,7 @@ summary(model5)
 predict(model5, data.frame(GPA=c(3), age=c(24)))
 @
 \section*{第六题}
+\addcontentsline{toc}{section}{第六题}
 <<>>=
 #读入数据
 data6 <- read.csv("~/homework/data/data4.6.csv", header=T)
@@ -174,6 +303,7 @@ data.frame(result$outmat, R2=result$rsq)
 #最后选择x2
 @
 \section*{第七题}
+\addcontentsline{toc}{section}{第七题}
 <<>>=
 #读入数据
 data7 <- read.csv("~/homework/data/data4.7.csv", header=T)
@@ -199,6 +329,7 @@ data.frame(result$outmat, R2=result$rsq, BIC=result$bic)
 @
 最后根据BIC选择的模型也是剔除X3
 \section*{第八题}
+\addcontentsline{toc}{section}{第八题}
 离差矩阵函数
 <<>>=
 #先建立中心化每个变量值的函数
@@ -225,10 +356,132 @@ r.fun <- function(m) {
   cor(y, y.hat)
 }
 @
+\chapter*{第五章}
+\addcontentsline{toc}{chapter}{第五章}
+\section*{第一题}
+\addcontentsline{toc}{section}{第一题}
+<<5.1,fig.width=5, fig.height=4>>=
+#输入数据
+price <- c(275, 300, 325, 350, 375)
+sale.rate <- c(1.6, 0.95, 0.65, 0.50, 0.45)
+price.sale <- cbind(price, sale.rate)
+plot(price, sale.rate, pch=3)
+model5.1 <-lm(sale.rate ~ log(price))
+summary(model5.1)
+lines(price, predict(model5.1), pch=2)
+model5.1.2 <- lm(sale.rate ~poly(price, 2))
+summary(model5.1.2)
+lines(price, predict(model5.1.2), pch=2, col=3)
+#二次曲线能得到更好的拟合结果
+
+#预测
+predict(model5.1.2, data.frame(price=c(295)))
+@
+\section*{第二题}
+\addcontentsline{toc}{section}{第二题}
+<<5.2>>=
+#输入数据
+MPH <- c(32, 37, 44, 49, 56, 62, 68)
+MPG <- c(20, 23, 26, 27, 26, 25, 22)
+#先建模
+model5.2 <- lm(MPG ~poly(MPH, 2))
+summary(model5.2)
+plot(MPH, MPG, pch=3)
+lines(MPH, predict(model5.2), pch=2, col=4)
+#预测
+predict(model5.2, data.frame(MPH=c(50)))
+@
+\section*{第三题}
+\addcontentsline{toc}{section}{第三题}
+<<5.3>>=
+#读入数据
+data5.3 <- read.csv("~/homework/data/data5.3.csv", header=T)
+plot(data5.3$X, data5.3$y, pch=3)
+#建幂函数模型
+model5.3 <- lm(log(data5.3$y) ~ log(data5.3$X))
+summary(model5.3)
+lines(data5.3$X, exp(fitted(model5.3)))
+@
+\section*{第四题}
+\addcontentsline{toc}{section}{第四题}
+<<5.4>>=
+#读入数据
+data5.4 <- read.csv("~/homework/data/data5.4.csv", header=T)
+model5.4.1 <- lm(y ~ X1 + X2 + X3, data=data5.4)
+summary(model5.4.1)
+#X1、X2 、X3都不显著。建立对数线性模型
+model5.4.2 <- lm(log(y) ~ log(X1) + log(X2) + log(X3/X2), data=data5.4)
+summary(model5.4.2)
+#从t检验和f检验来看，对数线性模型稍稍比线性模型优
+#是否在1978年之后设为虚拟变量
+X4 <-c(0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
+model5.4.3 <- lm(y ~ X1 + X2 + X3 + factor(X4), data=data5.4)
+summary(model5.4.3)
+@
+
+\section*{第五题}
+\addcontentsline{toc}{section}{第五题}
+<<5.5>>=
+#读入数据
+data5.5 <- read.csv("~/homework/data/data5.5.csv", header=T)
+names(data5.5) <- c( "X", "t", "PCEXP",  "EXPDUR", "EXPND", "EXPS"  )
+#构造耐用消费品支出与个人消费支出的幂函数回归模型
+model5.5.1 <- lm(log(EXPDUR) ~ log(PCEXP), data=data5.5)
+summary(model5.5.1)
+#构造服务性消费品支出与时间t的回归模型
+model5.5.2 <- lm(log(data5.5$EXPS) ~ data5.5$t + 0 , data=data5.5)
+
+summary(model5.5.2)
+#求增长率r
+r = exp(coef(model5.5.2)[1])-1
+r
+@
+
+\section*{第六题}
+\addcontentsline{toc}{section}{第六题}
+<<5.6>>=
+logistic.plot <- function(x) {
+  y <- 1/(1 + exp(-x))
+  
+  plot(x, y, main="logistic函数", type="l", lty=2, col=4)
+}
+#函数的使用
+logistic.plot(c(-10:10))
+@
+
+\chapter*{第六章}
+\addcontentsline{toc}{chapter}{第六章}
+\section*{第一题}
+\addcontentsline{toc}{section}{第一题}
+
+<<6.1>>=
+#读入数据
+data6.1 <- read.csv("~/homework/data/data6.1.csv", header=T)
+#建立logistic回归模型
+model6.1.1 <- glm(G ~ x1 + x2, data=data6.1)
+summary(model6.1.1)
+#查看判别结果
+pre <-ifelse(fitted(model6.1.1)<1.5, 1, 2)
+
+
+@
 
 
 
 
 
+
+
+
+\section*{第二题}
+\addcontentsline{toc}{section}{第二题}
+\section*{第三题}
+\addcontentsline{toc}{section}{第三题}
+\section*{第四题}
+\addcontentsline{toc}{section}{第四题}
+\section*{第五题}
+\addcontentsline{toc}{section}{第五题}
+\section*{第六题}
+\addcontentsline{toc}{section}{第六题}
 
 \enddocument
